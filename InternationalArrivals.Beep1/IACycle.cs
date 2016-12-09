@@ -10,6 +10,7 @@ using Beep1.Utils;
 using FishbowlSDK;
 using Beep1.Objects;
 using System.IO;
+using Dapper;
 
 namespace InternationalArrivals.Beep1
 {
@@ -67,14 +68,31 @@ namespace InternationalArrivals.Beep1
                 C.WL("Location: " + (location?.Name ?? "NONE"));
                 C.WL("Part: " + (partNo ?? "NONE"));
                 C.WL("Qty: " + ((qty > 0) ? qty : 0));
-                C.WL("Traacking: " + (trackingNo ?? "NONE"));
+                C.WL("Tracking: " + (trackingNo ?? "NONE"));
                 C.WL("F1=Exit" + (isReady ? "F2=Count" : ""));
 
                 if (location == null)
-                {
+                {/*
                     C.WL("Location:");
                     location = LocationUtils.captureDisplayLocation(api, C.getString(out cancel));
                     continue;
+                    */
+                    C.WL("Location:");
+                    String scan = C.getString(out cancel);
+                    if (cancel)
+                    {
+                        var yn = C.YN("Are you sure? Exiting.");
+                        cancel = yn;
+                        continue;
+                    }
+                    if (!String.IsNullOrWhiteSpace(scan))
+                    {
+                        string query = "select tag.num from tag join location on location.id = tag.locationid and tag.typeid = 10 where location.name like @lcn";
+                        int locValue = db.Query<Int32>(query, new { lcn = scan }).First();
+                        location = LocationUtils.captureDisplayLocation(api, Convert.ToString(locValue));
+                        continue;
+
+                    }
                 }
                 if (String.IsNullOrEmpty(partNo))
                 {
@@ -83,7 +101,7 @@ namespace InternationalArrivals.Beep1
                     String scan = C.getStringFinishableFunctions(out cancel, out finish, out fnKey);
                     if (cancel)
                     {
-                        var yn = C.YN("Are you sure? Existing.");
+                        var yn = C.YN("Are you sure? Exiting.");
                         cancel = yn;
                         continue;
                     }
@@ -108,13 +126,16 @@ namespace InternationalArrivals.Beep1
                         else
                         {
                             C.A("Part# Not Found");
+                            continue;
                         }
                     }
                     else
                     {
                         C.A("Scan Error");
+                        continue;
                     }
                 }
+               
                 if (qty==0)
                 {
                     ConsoleKey? fnKey;
@@ -122,13 +143,13 @@ namespace InternationalArrivals.Beep1
                     String scan = C.getStringFinishableFunctions(out cancel, out finish, out fnKey);
                     if (cancel)
                     {
-                        var yn = C.YN("Are you sure? Existing.");
+                        var yn = C.YN("Are you sure? Exiting.");
                         cancel = yn;
                         continue;
                     }
                     else if (finish)
                     {
-                        var yn = C.YN("Are you sure? Existing.");
+                        var yn = C.YN("Are you sure? Exiting.");
                         finish = yn;
                         continue;
                     }
@@ -160,13 +181,13 @@ namespace InternationalArrivals.Beep1
                     String scan = C.getStringFinishableFunctions(out cancel, out finish, out fnKey);
                     if (cancel)
                     {
-                        var yn = C.YN("Are you sure? Existing.");
+                        var yn = C.YN("Are you sure? Exiting.");
                         cancel = yn;
                         continue;
                     }
                     else if (finish)
                     {
-                        var yn = C.YN("Are you sure? Existing.");
+                        var yn = C.YN("Are you sure? Exiting.");
                         finish = yn;
                         continue;
                     }
